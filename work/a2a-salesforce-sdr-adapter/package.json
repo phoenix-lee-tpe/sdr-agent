@@ -1,0 +1,14 @@
+{
+  "name": "a2a-salesforce-sdr-adapter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal A2A adapter for delegating Copilot Studio tasks to a Salesforce SDR agent.",
+  "scripts": {
+    "start": "node src/server.mjs",
+    "smoke": "node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

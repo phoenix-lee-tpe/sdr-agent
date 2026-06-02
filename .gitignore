@@ -1,0 +1,18 @@
+node_modules/
+npm-debug.log*
+
+*.log
+*.err.log
+*.zip
+
+.env
+.env.*
+!.env.example
+
+.azure/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Reference clone used during reconstruction; not part of this project.
+work/CopilotStudioSamples-a2a/

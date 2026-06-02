@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "create_sdr_email_drafts input",
+  "type": "object",
+  "required": ["drafts"],
+  "properties": {
+    "drafts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["to", "subject", "bodyHtml"],
+        "properties": {
+          "leadId": { "type": "string" },
+          "leadName": { "type": "string" },
+          "company": { "type": "string" },
+          "to": { "type": "string" },
+          "subject": { "type": "string" },
+          "bodyHtml": { "type": "string" },
+          "templateName": { "type": "string" },
+          "source": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
