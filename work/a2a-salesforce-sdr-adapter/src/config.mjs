@@ -1,11 +1,19 @@
 export function getConfig(env = process.env) {
   const port = Number(env.PORT || 7071);
   const publicBaseUrl = trimTrailingSlash(env.PUBLIC_BASE_URL || `http://localhost:${port}`);
+  const authMode = String(env.ADAPTER_AUTH_MODE || "").toLowerCase() || inferLegacyAuthMode(env);
   const requireApiKey = String(env.ADAPTER_REQUIRE_API_KEY || "false").toLowerCase() === "true";
 
   return {
     port,
     publicBaseUrl,
+    auth: {
+      mode: authMode,
+      allowedEmailDomains: parseCsv(env.SALESFORCE_ALLOWED_EMAIL_DOMAINS || ""),
+      allowedUsernames: parseCsv(env.SALESFORCE_ALLOWED_USERNAMES || ""),
+      allowedOrgIds: parseCsv(env.SALESFORCE_ALLOWED_ORG_IDS || ""),
+      userInfoUrl: env.SALESFORCE_USERINFO_URL || ""
+    },
     apiKey: {
       required: requireApiKey,
       header: (env.ADAPTER_API_KEY_HEADER || "x-api-key").toLowerCase(),
@@ -26,4 +34,15 @@ export function getConfig(env = process.env) {
 
 function trimTrailingSlash(value) {
   return value.replace(/\/+$/, "");
+}
+
+function inferLegacyAuthMode(env) {
+  return String(env.ADAPTER_REQUIRE_API_KEY || "false").toLowerCase() === "true" ? "api_key" : "none";
+}
+
+function parseCsv(value) {
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }

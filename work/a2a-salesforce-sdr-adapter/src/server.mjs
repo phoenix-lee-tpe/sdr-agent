@@ -87,8 +87,9 @@ async function routeRequest(config, req, res) {
       url.pathname === "/a2a/salesforce-sdr/v1/message-stream" ||
       url.pathname === "/a2a/salesforce-sdr/v1/message/stream")
   ) {
-    if (!isAuthorized(config, req)) {
-      writeJson(res, 401, buildJsonRpcError(null, -32001, "Unauthorized"));
+    const authContext = await authorizeRequest(config, req);
+    if (!authContext.authorized) {
+      writeJson(res, authContext.statusCode || 401, buildJsonRpcError(null, -32001, authContext.message || "Unauthorized"));
       return;
     }
 
@@ -105,6 +106,10 @@ async function routeRequest(config, req, res) {
       })
     );
     const a2aRequest = parseA2aRequest(body);
+    a2aRequest.auth = authContext.user || null;
+    if (authContext.user) {
+      a2aRequest.structuredContext.authenticatedSalesforceUser = authContext.user;
+    }
     const sdrResult = await runSdrTask(config, a2aRequest);
 
     if (isStreamRequest(url.pathname, a2aRequest.method)) {
@@ -156,13 +161,131 @@ function isStreamRequest(pathname, method) {
   );
 }
 
-function isAuthorized(config, req) {
-  if (!config.apiKey.required) {
-    return true;
+async function authorizeRequest(config, req) {
+  switch (config.auth.mode) {
+    case "none":
+      return { authorized: true };
+    case "api_key":
+      return authorizeApiKey(config, req);
+    case "salesforce_oauth":
+      return authorizeSalesforceOAuth(config, req);
+    default:
+      return { authorized: false, statusCode: 500, message: `Unsupported adapter auth mode: ${config.auth.mode}` };
+  }
+}
+
+function authorizeApiKey(config, req) {
+  if (!config.apiKey.required && config.auth.mode !== "api_key") {
+    return { authorized: true };
   }
 
   const provided = req.headers[config.apiKey.header];
-  return Boolean(config.apiKey.value) && provided === config.apiKey.value;
+  return Boolean(config.apiKey.value) && provided === config.apiKey.value
+    ? { authorized: true }
+    : { authorized: false, statusCode: 401, message: "Unauthorized" };
+}
+
+async function authorizeSalesforceOAuth(config, req) {
+  const token = extractBearerToken(req);
+  if (!token) {
+    return { authorized: false, statusCode: 401, message: "Missing Salesforce bearer token" };
+  }
+
+  try {
+    const user = await fetchSalesforceUserInfo(config, token);
+    const allowed = isAllowedSalesforceUser(config, user);
+    return allowed
+      ? { authorized: true, user }
+      : { authorized: false, statusCode: 403, message: "Salesforce user is not allowed to invoke this adapter" };
+  } catch (error) {
+    console.warn(
+      JSON.stringify({
+        event: "salesforce_auth_failed",
+        message: error.message,
+        timestamp: new Date().toISOString()
+      })
+    );
+    return { authorized: false, statusCode: 401, message: "Salesforce authentication failed" };
+  }
+}
+
+function extractBearerToken(req) {
+  const authorization = req.headers.authorization || "";
+  const match = /^Bearer\s+(.+)$/i.exec(authorization);
+  return match?.[1] || "";
+}
+
+async function fetchSalesforceUserInfo(config, token) {
+  const userInfoUrl =
+    config.auth.userInfoUrl ||
+    `${config.salesforce.myDomainUrl || "https://login.salesforce.com"}/services/oauth2/userinfo`;
+
+  const response = await fetch(userInfoUrl, {
+    headers: {
+      authorization: `Bearer ${token}`,
+      accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Salesforce UserInfo request failed with HTTP ${response.status}`);
+  }
+
+  return normalizeSalesforceUserInfo(await response.json());
+}
+
+function normalizeSalesforceUserInfo(userInfo) {
+  const organizationId =
+    userInfo.organization_id ||
+    userInfo.organizationId ||
+    extractOrgIdFromSalesforceUrls(userInfo.urls || {});
+
+  return {
+    userId: userInfo.user_id || userInfo.userId || userInfo.sub || "",
+    username: userInfo.preferred_username || userInfo.username || userInfo.email || "",
+    email: userInfo.email || "",
+    name: userInfo.name || "",
+    organizationId,
+    profile: userInfo.profile || "",
+    raw: userInfo
+  };
+}
+
+function extractOrgIdFromSalesforceUrls(urls) {
+  for (const value of Object.values(urls)) {
+    const match = typeof value === "string" ? /\/id\/([^/]+)\//.exec(value) : null;
+    if (match) return match[1];
+  }
+  return "";
+}
+
+function isAllowedSalesforceUser(config, user) {
+  const email = user.email.toLowerCase();
+  const username = user.username.toLowerCase();
+  const orgId = user.organizationId;
+
+  if (
+    config.auth.allowedOrgIds.length > 0 &&
+    !config.auth.allowedOrgIds.some((allowedOrgId) => allowedOrgId === orgId)
+  ) {
+    return false;
+  }
+
+  if (
+    config.auth.allowedUsernames.length > 0 &&
+    !config.auth.allowedUsernames.some((allowedUsername) => allowedUsername.toLowerCase() === username)
+  ) {
+    return false;
+  }
+
+  if (
+    config.auth.allowedEmailDomains.length > 0 &&
+    !config.auth.allowedEmailDomains.some((domain) => email.endsWith(`@${domain.toLowerCase()}`))
+  ) {
+    return false;
+  }
+
+  return true;
 }
 
 function readJson(req) {

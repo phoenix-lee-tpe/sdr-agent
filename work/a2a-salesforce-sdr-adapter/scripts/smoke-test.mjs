@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import http from "node:http";
 import { createServer } from "../src/server.mjs";
 import { getConfig } from "../src/config.mjs";
 
@@ -160,4 +161,84 @@ try {
   console.log("Smoke test passed");
 } finally {
   await new Promise((resolve) => server.close(resolve));
+}
+
+const userInfoServer = createUserInfoServer();
+await new Promise((resolve) => userInfoServer.listen(0, resolve));
+
+const authConfig = getConfig({
+  PORT: "0",
+  PUBLIC_BASE_URL: "http://localhost:0",
+  SALESFORCE_MODE: "mock",
+  ADAPTER_AUTH_MODE: "salesforce_oauth",
+  SALESFORCE_USERINFO_URL: `http://127.0.0.1:${userInfoServer.address().port}/userinfo`,
+  SALESFORCE_ALLOWED_EMAIL_DOMAINS: "advantech.com.tw"
+});
+
+const authServer = createServer(authConfig);
+await new Promise((resolve) => authServer.listen(0, resolve));
+
+try {
+  const { port } = authServer.address();
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const authBody = {
+    jsonrpc: "2.0",
+    id: "auth-smoke-1",
+    method: "message/send",
+    params: {
+      message: {
+        contextId: "ctx-auth-smoke",
+        role: "user",
+        parts: [{ kind: "text", text: "Draft an SDR email." }]
+      }
+    }
+  };
+
+  const unauthenticated = await fetch(`${baseUrl}/a2a/salesforce-sdr/v1/message`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(authBody)
+  });
+  assert.equal(unauthenticated.status, 401);
+
+  const authenticated = await fetch(`${baseUrl}/a2a/salesforce-sdr/v1/message`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: "Bearer valid-token"
+    },
+    body: JSON.stringify(authBody)
+  });
+  assert.equal(authenticated.status, 200);
+  assert.match((await authenticated.json()).result.parts[0].text, /Mock SDR/);
+
+  console.log("Salesforce OAuth smoke test passed");
+} finally {
+  await new Promise((resolve) => authServer.close(resolve));
+  await new Promise((resolve) => userInfoServer.close(resolve));
+}
+
+function createUserInfoServer() {
+  return createServerFromHandler((req, res) => {
+    if (req.url !== "/userinfo" || req.headers.authorization !== "Bearer valid-token") {
+      res.writeHead(401, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "invalid_token" }));
+      return;
+    }
+
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(
+      JSON.stringify({
+        user_id: "005xx0000012345",
+        preferred_username: "phoenixlf.lee@advantech.com.tw",
+        email: "phoenixlf.lee@advantech.com.tw",
+        name: "Phoenix Lee",
+        organization_id: "00Dxx0000000001"
+      })
+    );
+  });
+}
+
+function createServerFromHandler(handler) {
+  return http.createServer(handler);
 }

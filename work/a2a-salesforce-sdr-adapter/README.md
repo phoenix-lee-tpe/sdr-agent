@@ -144,9 +144,14 @@ Important variables:
 | --- | --- |
 | `PORT` | Local HTTP port. Defaults to `7071`. |
 | `PUBLIC_BASE_URL` | Public URL used in the agent card. |
+| `ADAPTER_AUTH_MODE` | Inbound auth mode for A2A calls. Use `none`, `api_key`, or `salesforce_oauth`. |
 | `ADAPTER_REQUIRE_API_KEY` | Set `true` to require an API key. |
 | `ADAPTER_API_KEY` | API key value expected from Copilot Studio. |
 | `ADAPTER_API_KEY_HEADER` | Header name. Defaults to `x-api-key`. |
+| `SALESFORCE_USERINFO_URL` | Optional Salesforce UserInfo endpoint override for inbound `salesforce_oauth`. Defaults to `{SALESFORCE_MY_DOMAIN_URL}/services/oauth2/userinfo`, or `https://login.salesforce.com/services/oauth2/userinfo` if no My Domain is set. |
+| `SALESFORCE_ALLOWED_EMAIL_DOMAINS` | Optional comma-separated email domains allowed to call the adapter. |
+| `SALESFORCE_ALLOWED_USERNAMES` | Optional comma-separated Salesforce usernames allowed to call the adapter. |
+| `SALESFORCE_ALLOWED_ORG_IDS` | Optional comma-separated Salesforce org IDs allowed to call the adapter. |
 | `SALESFORCE_MODE` | `mock` or `live`. Defaults to `mock`. |
 | `SALESFORCE_MY_DOMAIN_URL` | Salesforce My Domain URL for OAuth. |
 | `SALESFORCE_API_HOST` | Agent API host. Defaults to `https://api.salesforce.com`. |
@@ -180,10 +185,39 @@ Only set `SALESFORCE_AGENT_SESSION_URL` or `SALESFORCE_AGENT_MESSAGE_URL_TEMPLAT
 
 The live adapter still tells Copilot Studio that proposed Salesforce writes require approval. It does not mark writes as completed unless the Salesforce agent response explicitly does so.
 
+## Inbound Salesforce Authentication
+
+For access control on the A2A endpoint, configure the adapter to require a Salesforce OAuth bearer token:
+
+```text
+ADAPTER_AUTH_MODE=salesforce_oauth
+SALESFORCE_MY_DOMAIN_URL=https://<your-sandbox-my-domain>.sandbox.my.salesforce.com
+SALESFORCE_ALLOWED_EMAIL_DOMAINS=advantech.com,advantech.com.tw
+```
+
+In this mode, the adapter rejects A2A POST calls unless the request includes:
+
+```http
+Authorization: Bearer <salesforce-access-token>
+```
+
+The adapter validates that token through Salesforce UserInfo before invoking the SDR logic. Salesforce documents the UserInfo endpoint as `/services/oauth2/userinfo`; the token introspection endpoint is `/services/oauth2/introspect` if stricter server-side validation is needed later.
+
+For Copilot Studio, the generated A2A connector should be configured with Salesforce OAuth rather than `None`. Use the Salesforce sandbox authorize/token endpoints:
+
+```text
+Authorization URL: https://test.salesforce.com/services/oauth2/authorize
+Token URL: https://test.salesforce.com/services/oauth2/token
+Refresh URL: https://test.salesforce.com/services/oauth2/token
+Scopes: openid api refresh_token
+```
+
+For production Salesforce orgs, use `https://login.salesforce.com` or the org My Domain host instead of `https://test.salesforce.com`.
+
 ## Production Checklist
 
 - Deploy behind HTTPS.
-- Enable authentication from Copilot Studio to the adapter.
+- Enable Salesforce OAuth authentication from Copilot Studio to the adapter.
 - Store Salesforce secrets in a managed secret store.
 - Replace mock mode with confirmed Salesforce Agent API endpoint templates.
 - Add durable task storage before supporting long-running work.
