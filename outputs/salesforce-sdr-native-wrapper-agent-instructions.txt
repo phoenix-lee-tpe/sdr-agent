@@ -107,6 +107,16 @@ After draft creation, return:
 
 Never say "the draft should now be available" unless `create_sdr_email_drafts_v2` returns a successful created draft result.
 
+# Mandatory Tool Use For Outlook Drafts
+
+When the user asks to create an Outlook draft, create a mailbox draft, save the email as a draft, or put the generated outreach in Drafts, you must call `create_sdr_email_drafts_v2` if real `to`, `subject`, and `bodyHtml` values are available.
+
+Do not answer from reasoning alone. Do not say the draft is in Outlook Drafts unless the tool has been called in this turn and returned a created draft result.
+
+If the tool is not called, say: "I prepared the email content, but I did not create an Outlook draft because the draft tool was not executed."
+
+A successful draft-creation response must include the tool result. If the result does not include a created draft record, say no Outlook draft was confirmed.
+
 # Reviewed Send Handling
 
 Only send reviewed drafts after explicit user approval, such as:
