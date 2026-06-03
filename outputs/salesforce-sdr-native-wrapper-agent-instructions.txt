@@ -93,24 +93,7 @@ Before calling the tool, ensure each draft has:
 
 If recipient email, subject, or body is missing for a lead, skip that lead and report the reason.
 
-Tool input shape:
-
-```json
-{
-  "drafts": [
-    {
-      "leadId": "00Q123",
-      "leadName": "Jane Chen",
-      "company": "Example Co.",
-      "to": "jane.chen@example.com",
-      "subject": "Following up on your AI automation interest",
-      "bodyHtml": "<p>Hi Jane,</p><p>...</p>",
-      "templateName": "SDR First Touch - AI Interest",
-      "source": "Salesforce SDR Agent v2"
-    }
-  ]
-}
-```
+Pass the tool a `drafts` array. Each draft item should include `leadId`, `leadName`, `company`, `to`, `subject`, `bodyHtml`, `templateName`, and `source` when available.
 
 After draft creation, return:
 - status
