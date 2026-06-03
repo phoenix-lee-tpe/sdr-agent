@@ -60,8 +60,8 @@ function runMockSdrTask(request) {
         requiresSelectionInLiveMode: true
       },
       mailboxDrafts: {
-        action: "create_user_mailbox_drafts_after_user_request",
-        owner: "Copilot Studio sales orchestrator with the user's Outlook or Microsoft Graph connection",
+        action: "orchestrate_user_mailbox_drafts_after_user_request",
+        owner: "Salesforce SDR Agent v2 when mailbox orchestration is available; otherwise return a complete draft payload for a local wrapper fallback tool",
         sendAutomatically: false,
         reviewedSendAllowedAfterExplicitUserApproval: true,
         requiresRecipientEmail: true
@@ -275,9 +275,9 @@ function buildSalesforceAgentPrompt(request) {
     `- Account ID: ${sf.accountId || "not provided"}`,
     `- Opportunity ID: ${sf.opportunityId || "not provided"}`,
     `- Handoff reason: ${handoff.reason || "Lead nurture requested from Copilot Studio sales orchestrator."}`,
-    "- Required outcome: confirm handoff acceptance, recommend a nurture cadence, select or recommend the best matching Salesforce SDR email template, draft first-touch outreach from that template, and propose Salesforce updates.",
+    "- Required outcome: confirm handoff acceptance, recommend a nurture cadence, select or recommend the best matching Salesforce SDR email template, draft first-touch outreach from that template, orchestrate mailbox draft creation when available, and propose Salesforce updates.",
     "- Template fallback: if no appropriate existing SDR email template fits the subject leads or contacts, propose a new template for user review and approval instead of forcing a poor match.",
-    "- Mailbox draft handoff: if the user asks to generate personalized first-touch emails, return recipient-ready subject and body content for each lead so the Copilot Studio sales orchestrator can create drafts in the user's mailbox through its Outlook or Microsoft Graph connection. Do not send emails during draft creation. After the user reviews the drafts, the orchestrator may send reviewed drafts only after explicit user approval.",
+    "- Mailbox draft orchestration: if the user asks to create personalized first-touch email drafts, use Salesforce SDR Agent v2 mailbox draft orchestration when it is available. If mailbox orchestration is not available, return recipient-ready draft payloads with to, subject, and bodyHtml so the native wrapper can use a local fallback tool. Do not send emails during draft creation. After the user reviews the drafts, send only after explicit user approval.",
     "- Constraint: do not execute Salesforce writes unless approval is explicitly granted."
   ].join("\n");
 }

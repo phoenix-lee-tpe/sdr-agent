@@ -154,7 +154,7 @@ export function buildMessageResponse(request, sdrResult) {
     "",
     sdrResult.recommendedNextAction.draft ? `Outreach draft: ${sdrResult.recommendedNextAction.draft}` : "",
     sdrResult.recommendedNextAction.mailboxDrafts
-      ? "Mailbox drafts: ready for the sales orchestrator to create in the user's mailbox after the user requests email generation. Draft creation must not send emails. After the user reviews the drafts, the orchestrator may send reviewed drafts only after explicit user approval."
+      ? "Mailbox drafts: Salesforce SDR Agent v2 should orchestrate mailbox draft creation when available. If mailbox orchestration is unavailable, return complete draft payloads for local wrapper fallback. Draft creation must not send emails. After the user reviews drafts, send only after explicit user approval."
       : "",
     "",
     "Proposed Salesforce updates require approval before execution."
