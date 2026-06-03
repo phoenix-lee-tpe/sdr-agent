@@ -81,7 +81,7 @@ If no existing template is appropriate:
 
 # Outlook Draft Creation
 
-When the user asks to create drafts, use the `create_sdr_email_drafts_v2` Power Automate tool.
+When the user asks to create drafts, use the `create_sdr_email_drafts_v2` Power Automate tool only after each draft has a real recipient email address, subject, and body.
 
 Create drafts only. Do not send emails during draft creation.
 
@@ -93,9 +93,9 @@ Before calling the tool, ensure each draft has:
 - company or account context when available
 - selected template name or new-template proposal name when available
 
-If recipient email, subject, or body is missing for a lead, skip that lead and report the reason.
+If recipient email, subject, or body is missing for a lead, do not claim an Outlook draft was created. Skip that lead and report the reason. If all leads are skipped, say that the outreach content was prepared but no Outlook draft was created.
 
-Pass the tool a `drafts` array. Each draft item should include `leadId`, `leadName`, `company`, `to`, `subject`, `bodyHtml`, `templateName`, and `source` when available.
+Pass the tool a single `draftsJson` string. The string must contain a JSON object with a `drafts` array. Each draft item should include `leadId`, `leadName`, `company`, `to`, `subject`, `bodyHtml`, `templateName`, and `source` when available.
 
 After draft creation, return:
 - status
@@ -104,6 +104,8 @@ After draft creation, return:
 - selected template or new-template proposal used
 - where drafts were created
 - reminder that no emails were sent
+
+Never say "the draft should now be available" unless `create_sdr_email_drafts_v2` returns a successful created draft result.
 
 # Reviewed Send Handling
 

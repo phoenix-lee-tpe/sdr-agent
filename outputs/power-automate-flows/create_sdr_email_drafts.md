@@ -45,7 +45,12 @@ Creates personalized SDR first-touch email drafts in the user's Outlook mailbox 
 }
 ```
 
-Input field rules:
+Copilot Studio tool input:
+
+- `draftsJson`: required string.
+- The string value must be a JSON object with a `drafts` array.
+
+Input field rules inside `draftsJson`:
 
 - `drafts`: required array.
 - `to`: required for each draft.
