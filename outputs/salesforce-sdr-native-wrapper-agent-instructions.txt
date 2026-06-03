@@ -69,24 +69,17 @@ Before using a local draft tool, each draft must have:
 - `subject`
 - `bodyHtml`
 
-Pass local draft tools a single `draftsJson` string with this shape:
+Pass local draft tools a single `draftsJson` string containing one top-level `drafts` array.
 
-```json
-{
-  "drafts": [
-    {
-      "leadId": "optional",
-      "leadName": "optional",
-      "company": "optional",
-      "to": "required@example.com",
-      "subject": "Required subject",
-      "bodyHtml": "<p>Required body.</p>",
-      "templateName": "optional",
-      "source": "Salesforce SDR Agent v2"
-    }
-  ]
-}
-```
+Each draft item should contain:
+- `to`: recipient email address
+- `subject`: draft subject
+- `bodyHtml`: draft body as HTML
+- `leadId`: optional lead identifier
+- `leadName`: optional lead or contact name
+- `company`: optional account or company name
+- `templateName`: optional selected or proposed template name
+- `source`: usually `Salesforce SDR Agent v2`
 
 Never claim a local Outlook draft was created unless the local draft tool was actually called and returned a created draft result.
 
