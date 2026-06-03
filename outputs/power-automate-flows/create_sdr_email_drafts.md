@@ -102,6 +102,12 @@ Input field rules inside `draftsJson`:
 
 6. Return a structured response to Copilot Studio.
 
+   Response body:
+
+   - `result`: `string(variables('createdDrafts'))`
+
+   Do not wrap `createdDrafts` in `json(...)` because `createdDrafts` is already an array. Using `json(variables('createdDrafts'))` causes the final response action to fail even after Outlook draft creation succeeds.
+
 ## Output
 
 ```json
