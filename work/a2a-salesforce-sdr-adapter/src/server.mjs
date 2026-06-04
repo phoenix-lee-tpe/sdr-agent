@@ -80,13 +80,7 @@ async function routeRequest(config, req, res) {
     return;
   }
 
-  if (
-    req.method === "POST" &&
-    (url.pathname === "/a2a/salesforce-sdr/v1/message" ||
-      url.pathname === "/a2a/salesforce-sdr/v1/message:stream" ||
-      url.pathname === "/a2a/salesforce-sdr/v1/message-stream" ||
-      url.pathname === "/a2a/salesforce-sdr/v1/message/stream")
-  ) {
+  if (req.method === "POST" && isMessagePath(url.pathname)) {
     const authContext = await authorizeRequest(config, req);
     if (!authContext.authorized) {
       writeJson(res, authContext.statusCode || 401, buildJsonRpcError(null, -32001, authContext.message || "Unauthorized"));
@@ -142,6 +136,19 @@ function isAgentCardPath(pathname) {
     pathname === "/a2a/salesforce-sdr/v1/message-stream/.well-known/agent-card.json" ||
     pathname === "/a2a/salesforce-sdr/v1/message/stream/.well-known/agent.json" ||
     pathname === "/a2a/salesforce-sdr/v1/message/stream/.well-known/agent-card.json"
+  );
+}
+
+function isMessagePath(pathname) {
+  return (
+    pathname === "/a2a/salesforce-sdr/v1/message" ||
+    pathname === "/a2a/salesforce-sdr/v1/message:stream" ||
+    pathname === "/a2a/salesforce-sdr/v1/message-stream" ||
+    pathname === "/a2a/salesforce-sdr/v1/message/stream" ||
+    pathname.endsWith("/a2a/salesforce-sdr/v1/message") ||
+    pathname.endsWith("/a2a/salesforce-sdr/v1/message:stream") ||
+    pathname.endsWith("/a2a/salesforce-sdr/v1/message-stream") ||
+    pathname.endsWith("/a2a/salesforce-sdr/v1/message/stream")
   );
 }
 
