@@ -120,22 +120,48 @@ async function routeRequest(config, req, res) {
 }
 
 function isAgentCardPath(pathname) {
+  const agentCardPaths = [
+    "/.well-known/agent.json",
+    "/.well-known/agent-card.json",
+    "/.well-known/agentcard.json",
+    "/.well-known/agentCard.json",
+    "/.well-known/agent_card.json",
+    "/a2a/salesforce-sdr/.well-known/agent.json",
+    "/a2a/salesforce-sdr/.well-known/agent-card.json",
+    "/a2a/salesforce-sdr/.well-known/agentcard.json",
+    "/a2a/salesforce-sdr/.well-known/agentCard.json",
+    "/a2a/salesforce-sdr/.well-known/agent_card.json",
+    "/a2a/salesforce-sdr/v1/card",
+    "/a2a/salesforce-sdr/v1/.well-known/agent.json",
+    "/a2a/salesforce-sdr/v1/.well-known/agent-card.json",
+    "/a2a/salesforce-sdr/v1/.well-known/agentcard.json",
+    "/a2a/salesforce-sdr/v1/.well-known/agentCard.json",
+    "/a2a/salesforce-sdr/v1/.well-known/agent_card.json",
+    "/a2a/salesforce-sdr/v1/message/.well-known/agent.json",
+    "/a2a/salesforce-sdr/v1/message/.well-known/agent-card.json",
+    "/a2a/salesforce-sdr/v1/message/.well-known/agentcard.json",
+    "/a2a/salesforce-sdr/v1/message/.well-known/agentCard.json",
+    "/a2a/salesforce-sdr/v1/message/.well-known/agent_card.json",
+    "/a2a/salesforce-sdr/v1/message:stream/.well-known/agent.json",
+    "/a2a/salesforce-sdr/v1/message:stream/.well-known/agent-card.json",
+    "/a2a/salesforce-sdr/v1/message:stream/.well-known/agentcard.json",
+    "/a2a/salesforce-sdr/v1/message:stream/.well-known/agentCard.json",
+    "/a2a/salesforce-sdr/v1/message:stream/.well-known/agent_card.json",
+    "/a2a/salesforce-sdr/v1/message-stream/.well-known/agent.json",
+    "/a2a/salesforce-sdr/v1/message-stream/.well-known/agent-card.json",
+    "/a2a/salesforce-sdr/v1/message-stream/.well-known/agentcard.json",
+    "/a2a/salesforce-sdr/v1/message-stream/.well-known/agentCard.json",
+    "/a2a/salesforce-sdr/v1/message-stream/.well-known/agent_card.json",
+    "/a2a/salesforce-sdr/v1/message/stream/.well-known/agent.json",
+    "/a2a/salesforce-sdr/v1/message/stream/.well-known/agent-card.json",
+    "/a2a/salesforce-sdr/v1/message/stream/.well-known/agentcard.json",
+    "/a2a/salesforce-sdr/v1/message/stream/.well-known/agentCard.json",
+    "/a2a/salesforce-sdr/v1/message/stream/.well-known/agent_card.json"
+  ];
+
   return (
-    pathname === "/.well-known/agent.json" ||
-    pathname === "/.well-known/agent-card.json" ||
-    pathname === "/a2a/salesforce-sdr/.well-known/agent.json" ||
-    pathname === "/a2a/salesforce-sdr/.well-known/agent-card.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/card" ||
-    pathname === "/a2a/salesforce-sdr/v1/.well-known/agent.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/.well-known/agent-card.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message/.well-known/agent.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message/.well-known/agent-card.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message:stream/.well-known/agent.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message:stream/.well-known/agent-card.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message-stream/.well-known/agent.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message-stream/.well-known/agent-card.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message/stream/.well-known/agent.json" ||
-    pathname === "/a2a/salesforce-sdr/v1/message/stream/.well-known/agent-card.json"
+    agentCardPaths.includes(pathname) ||
+    agentCardPaths.some((agentCardPath) => pathname.endsWith(agentCardPath))
   );
 }
 
